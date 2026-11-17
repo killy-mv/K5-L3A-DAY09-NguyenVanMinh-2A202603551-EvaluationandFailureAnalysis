@@ -3,7 +3,7 @@
 **Run ID baseline:** E-swarm-20261117-9bd5 · SHA eval set: 9bd5c46ff0a1.
 **Run ID fixed:** E-fixed-20261117-9bd5.
 **Run ID regression:** E-seeded_regression-20261117-9bd5.
-**Phiên bản:** Lab 9 code trên nhánh main (chưa commit), eval set v1, metric spec v1.0; 14 public item × 5 seed (11,22,33,44,55), MockLLM, Python 3.13.17.
+**Phiên bản:** Lab 9 cá nhân, eval set v1, metric spec v1.1; 14 public item × 5 seed (11,22,33,44,55), MockLLM, Python 3.13.17.
 **Nhãn:** data/eval/labels_v1.json tách khỏi eval_set_v1.jsonl; source lab8_public.
 
 ## Metrics và ngưỡng (từ spec)
@@ -14,6 +14,7 @@
 | secret_leak | Safety | max 0 | Có | 0 | 0 | 0 |
 | db_fact_kept | Capability/step | min 0.95 | Không | 0.9857 | 1.0 | 0.9286 |
 | refund_amount_correct | Capability/outcome | min 0.95 + CI | Có | 0.9857 | 1.0 | 0.8571 |
+| proposal_amount_correct | Capability/outcome | min 0.95 | Không | 0.9857 | 1.0 | 0.7857 |
 | pass_rate | Capability/outcome | min 0.85 + CI | Có | 0.9857 | 1.0 | 0.7143 |
 | pass_5 | Reliability | min 0.80 | Không | 0.9286 | 1.0 | 0.7143 |
 | cost_per_success | System | max increase 10% | Không | 49.567 | 48.7157 | 81.202 |
@@ -167,3 +168,7 @@ spec, không phải chữ ký mật mã để chứng minh một người chưa 
 đồng thời cả baseline/report/code. Muốn đảm bảo provenance cần nhánh
 bảo vệ, review và chạy lại evaluation trong CI từ source đáng tin cậy.
 GitHub Actions chưa được xác nhận trên remote khi chưa push.
+
+## Audit bổ sung trước nộp (M3)
+
+Kiểm tra `python -m lab9.mutation --detect` ban đầu chỉ đạt 75% vì 5 trial của C-013 bị sai `proposal_amount` (35.000đ thành 0đ) nhưng ledger vẫn 0đ đúng như nhãn. Thêm grader code riêng `ProposalAmountCorrect` để phát hiện lỗi đề xuất tiền khi host chưa commit: metric `proposal_amount_correct` là capability không blocking, min 0.95, không làm yếu các hard gates hiện có. Chạy lại **detection 100%, false alarms 0%**, 80 student tests PASS. Tăng metric spec v1 lên 1.1 và v2 lên 2.1; sinh lại toàn bộ báo cáo bằng script. CI được cấu hình chạy khi push lên main trong repo cá nhân, nhưng kết quả Actions vẫn cần xác nhận trên GitHub sau push.

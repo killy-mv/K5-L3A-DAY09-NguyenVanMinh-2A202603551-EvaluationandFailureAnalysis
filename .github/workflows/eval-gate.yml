@@ -1,5 +1,5 @@
 name: lab9-eval-gate
-on: [pull_request, workflow_dispatch]
+on: [push, pull_request, workflow_dispatch]
 permissions: {contents: read}
 concurrency: {group: "eval-gate-${{ github.ref }}", cancel-in-progress: true}
 jobs:
@@ -34,6 +34,7 @@ jobs:
       - run: python -m lab9.smoke
       - run: python -m pytest -q -m student -o addopts= -k "lab9 and not advanced"
       - run: python -m lab9.evalset --check
+      - run: python -m lab9.mutation --detect
       - name: Evaluate and gate the PR swarm
         shell: bash
         run: |
@@ -78,8 +79,10 @@ jobs:
       - if: steps.has.outputs.v2
         run: uv pip install -r requirements.txt -r requirements-lab9.txt
       - if: steps.has.outputs.v2
-        run: python -m pytest -q -m student -o addopts= -k advanced
+        run: python -m pytest -q -m student -o addopts=
       - if: steps.has.outputs.v2
         run: python -m lab9.evalset --v2
       - if: steps.has.outputs.v2
         run: python -m lab9.mutation --spec config/metric_spec_v2.yaml --baseline reports/baseline_v2.json
+      - if: steps.has.outputs.v2
+        run: python -m lab9.traps --pr reports/eval_slice_regression.json --baseline reports/baseline_v2.json --spec config/metric_spec_v2.yaml

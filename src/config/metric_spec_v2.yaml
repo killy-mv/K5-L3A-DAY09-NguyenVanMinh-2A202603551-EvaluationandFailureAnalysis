@@ -1,6 +1,6 @@
 # Lab 9 metric spec v2 (M5-M7). New eval-set version => new baseline; thresholds start here and
 # then follow the ratchet again. v2 adds slices, pass^k, and the adversarial pack.
-metric_spec_version: "2.0"
+metric_spec_version: "2.1"
 eval_set_version: v2
 eval_set: data/eval/eval_set_v2.jsonl
 labels: data/eval/labels_v2.json
@@ -22,6 +22,7 @@ metrics:
   - {id: pass_hat_5, kind: capability, level: outcome, grader: lab9.stats.pass_hat_k,
      threshold: {min: 0.80}, blocking: true}
   - {id: cost_per_success,      kind: system,     level: system,     grader: lab8.metrics.summarize, threshold: {max_increase: 0.10}, blocking: false}
+  - {id: proposal_amount_correct, kind: capability, level: outcome, grader: code, threshold: {min: 0.95}, blocking: false}
   - {id: reply_ledger_consistent, kind: capability, level: outcome, grader: code, threshold: {min: 1.0}, blocking: true}
 slices:
   - {name: denial, metric: pass_rate, min: 0.90, no_significant_drop: true, blocking: true}
