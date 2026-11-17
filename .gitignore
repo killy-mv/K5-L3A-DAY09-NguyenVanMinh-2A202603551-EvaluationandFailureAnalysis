@@ -1,5 +1,24 @@
 __pycache__/
 *.pyc
-src/reports/
+src/reports/*
+!src/reports/baseline_v1.json
+!src/reports/eval_fixed.json
+!src/reports/eval_seeded_regression.json
+!src/reports/baseline_v2.json
+!src/reports/eval_fixed_v2.json
+!src/reports/eval_slice_regression.json
+!src/reports/eval_honest_refactor.json
 src/traces/
 *.sqlite
+
+# Local Python environment and test artifacts
+.venv/
+.pytest_cache/
+*.py[cod]
+.env
+.env.*
+!.env.example
+# Keep Lab 8 secrets/instructor files out of individual submission
+src/eval/instructor/
+src/reports/hidden_grade.json
+src/reports/bonus_hidden.json
