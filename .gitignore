@@ -8,6 +8,7 @@ src/reports/*
 !src/reports/eval_fixed_v2.json
 !src/reports/eval_slice_regression.json
 !src/reports/eval_honest_refactor.json
+!src/reports/eval_flaky_regression.json
 src/traces/
 *.sqlite
 

@@ -99,16 +99,34 @@ def paired_bootstrap(a: Sequence[float], b: Sequence[float], *, n_resamples: int
     return difference, float(ci.low), float(ci.high)
 
 
+def _validate_pass_k(n: int, c: int, k: int) -> None:
+    """Reject invalid sampling counts rather than silently returning misleading scores."""
+    if any(isinstance(x, bool) or not isinstance(x, int) for x in (n, c, k)):
+        raise ValueError("n, c and k must all be integers")
+    if n < 1 or c < 0 or c > n or k < 1 or k > n:
+        raise ValueError("require n >= 1, 0 <= c <= n, and 1 <= k <= n")
+
+
 def pass_at_k(n: int, c: int, k: int) -> float:
     """Probability that AT LEAST ONE of k trials drawn from n (c of them passing) passes.
     Unbiased estimator (Chen et al. 2021): 1 - C(n-c, k) / C(n, k). Raise ValueError if k > n."""
-    # TODO M6
-    raise NotImplementedError
+    from math import comb
+
+    _validate_pass_k(n, c, k)
+    # If n-c < k, every k-subset contains a success.
+    if n - c < k:
+        return 1.0
+    return 1.0 - comb(n - c, k) / comb(n, k)
 
 
 def pass_hat_k(n: int, c: int, k: int) -> float:
     """pass^k (tau-bench, Yao et al. 2024): probability that ALL k trials drawn from n pass.
     Unbiased estimator: C(c, k) / C(n, k). Raise ValueError if k > n.
     pass^k <= pass@1 <= pass@k; a reliable agent keeps pass^k close to pass@1."""
-    # TODO M6
-    raise NotImplementedError
+    from math import comb
+
+    _validate_pass_k(n, c, k)
+    # If c < k there are no all-success k-subsets.
+    if c < k:
+        return 0.0
+    return comb(c, k) / comb(n, k)

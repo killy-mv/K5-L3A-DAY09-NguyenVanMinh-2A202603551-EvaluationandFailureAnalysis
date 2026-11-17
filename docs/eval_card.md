@@ -82,7 +82,88 @@ bộ test**; overall vẫn vượt floor 0.85. Trong slice money_movement,
 0.90**, không phải do CI âm hoàn toàn. Cách diễn giải này giữ tách biệt
 ngưỡng rủi ro và bằng chứng thống kê.
 
-**Giới hạn:** các con số trên là mô phỏng với 28 item, số mẫu cho từng
-slice nhỏ; không suy ra độ tin cậy trên yêu cầu thực. `pass_at_k`,
-`pass_hat_k` và blocking `pass_hat_5` còn thuộc **M6**; report M5
-hiện hiển thị các metric k bằng None và chưa phải CI Advanced/Expert hoàn chỉnh.
+## M6 — Reliability, pass@k / pass^k và A/A
+
+**Định nghĩa:** trên mỗi item có n=5 runs, c runs thành công, k trong 1/3/5:
+
+- `pass@k = 1 - C(n-c,k)/C(n,k)`: xác suất ít nhất một lần đạt trong k lần thử.
+- `pass^k = C(c,k)/C(n,k)` (metric `pass_hat_k`): xác suất cả k lần đều đạt; cách đo này nhạy với lỗi thỉnh thoảng xuất hiện.
+- Ước lượng được tính riêng theo item rồi lấy trung bình trên 28 item; không trộn seed của các item khác nhau. n/c/k sai sẽ bị từ chối bằng ValueError.
+
+### Kết quả kiểm thử A/A trên MockLLM
+
+Set A = [11, 22, 33, 44, 55], set B = [66, 77, 88, 99, 110]. Cùng shape `swarm`, cùng 28 item, chạy `python -m lab9.mutation --spec config/metric_spec_v2.yaml --aa 66,77,88,99,110`. Các metric có giá trị số đều cho Δ = 0.0000 (kể cả các metric tiền, pass_rate, pass@k, pass^k).
+
+| Metric | A | B | Δ |
+|---|---:|---:|---:|
+| pass_rate | 0.9786 | 0.9786 | 0.0000 |
+| pass@1 / pass^1 | 0.9786 | 0.9786 | 0.0000 |
+| pass@3 | 1.0000 | 1.0000 | 0.0000 |
+| pass^3 | 0.9357 | 0.9357 | 0.0000 |
+| pass@5 | 1.0000 | 1.0000 | 0.0000 |
+| pass^5 | 0.8929 | 0.8929 | 0.0000 |
+
+**Ngưỡng M6:** chọn `pass_hat_5 >= 0.80`, blocking trên v2 (baseline `E-swarm-20261117-c7ef`, SHA `c7ef29ae09f6`). Baseline 0.8929 > 0.80, tạo biên 0.0929; sự chênh lệch A/A quan sát = 0, nên ngưỡng không nằm *trong* vùng nhiễu quan sát. Ngưỡng là lựa chọn quản trị rủi ro cho demo, không phải giới hạn thống kê đã xác thực trên nhiều lần A/A độc lập.
+
+### Chạy các biến thể v2 sau cập nhật M6
+
+| Shape | pass_rate | pass@5 | pass^5 | Gate |
+|---|---:|---:|---:|---|
+| `swarm` baseline | 0.9786 | 1.0 | 0.8929 | baseline |
+| `fixed` | 1.0 | 1.0 | 1.0 | MERGE |
+| `honest_refactor` | 1.0 | 1.0 | 1.0 | MERGE |
+| `slice_regression` | 0.9357 | 1.0 | 0.8929 | BLOCK (slice:money_movement/pass_rate) |
+| `flaky_regression` | 0.9143 | 1.0 | 0.5714 | BLOCK (pass_rate, pass_hat_5, money_movement slice) |
+
+**Quan sát quan trọng:** `flaky_regression` có pass@5=1.0 nhưng pass^5=0.5714, nên nhiều lần thử không đồng nghĩa luôn ổn định. Gate còn phát hiện regression qua pass_rate CI [-0.114,-0.014] và money_movement slice; `pass_hat_5` là một lý do chặn độc lập do dưới floor, **không phải lý do duy nhất**.
+
+Mutation scorecard trên bộ public: **3/3 regression bị chặn, 0 báo nhầm** trên `fixed` và `honest_refactor`. Sự nhiễu của LLM thực có thể >0 (sampling, provider, latency, trạng thái tool), vì vậy A/A của MockLLM không được ngoại suy cho production. Tập 28 item / 5 seed vẫn có thể bỏ sót lỗi hiếm, đặc biệt chỉ xảy ra 1 trên 3 hay 1 trên 5 seed ngoài lịch cố định.
+
+Đối chứng file script-generated: `src/reports/baseline_v2.json`, `src/reports/eval_flaky_regression.json`, `src/reports/eval_fixed_v2.json`, `src/reports/eval_honest_refactor.json`, `src/reports/eval_slice_regression.json`.
+
+## M7 — Gate integrity và anti-gaming
+
+**Mục tiêu:** Không cho phép một báo cáo hoặc metric spec bị can thiệp làm biến
+một regression thành kết quả xanh. Quy tắc `integrity_check()` được thực thi
+trước các threshold/slice gate và trả về `BLOCK` khi phát hiện dữ liệu không
+đáng tin cậy.
+
+- **Giá trị số:** từ chối NaN/Inf hoặc metric blocking/graded bị thiếu;
+  đối chiếu các metric code-grader với trial rows và `pass_hat_5` với
+  thống kê theo từng item.
+- **Đầy đủ dữ liệu:** manifest phải đủ item × seed, không lặp cặp
+  `item_id@seed`, không mất item/seed so với baseline, không có
+  `evaluator_failures` hoặc giá trị grader null.
+- **Chống cherry-picking:** cặp (item, seed) của PR phải trùng baseline;
+  `manifest.seeds` phải đúng với spec, tránh chỉ giữ những seeds dễ.
+- **Chống chuyển slice:** tags gắn theo item nhất quán giữa mọi seed và
+  không được đổi khác baseline.
+- **Threshold ratchet:** với cùng `eval_set_version` và có
+  `--base-spec`, không xóa metric/slice, không hạ `min`, nâng `max`,
+  nới `max_increase`, bỏ `no_significant_drop`, tắt `blocking`
+  hoặc đổi grader/slice metric để qua gate.
+
+### Bằng chứng thực thi
+
+`python -m lab9.traps --pr reports/eval_slice_regression.json
+--baseline reports/baseline_v2.json --spec config/metric_spec_v2.yaml`
+trả **exit 0 (4/4 traps bị chặn)**. Các report trap sinh tại
+`src/reports/traps/` và không được dùng làm baseline.
+
+| Trap | Quyết định gate |
+|---|---|
+| evaluator_errors_as_nan | BLOCK — grader null / metrics invalid |
+| dropped_failing_rows | BLOCK — thiếu item × seed |
+| cherry_picked_seeds | BLOCK — seed set không khớp baseline |
+| loosened_spec | BLOCK — hạ floor và xóa slice, bị ratchet chặn |
+
+Scorecard `lab9.mutation` công khai: **3/3 regressions blocked,
+0 false alarms**, trong khi `fixed` và `honest_refactor` vẫn MERGE.
+`src/tests/test_lab9_m7.py` bổ sung kiểm tra các trường hợp làm giả
+report, thay đổi slice, thay đổi spec và baseline hợp lệ.
+
+**Giới hạn:** đây là kiểm tra tính nhất quán nội bộ của báo cáo và
+spec, không phải chữ ký mật mã để chứng minh một người chưa từng sửa
+đồng thời cả baseline/report/code. Muốn đảm bảo provenance cần nhánh
+bảo vệ, review và chạy lại evaluation trong CI từ source đáng tin cậy.
+GitHub Actions chưa được xác nhận trên remote khi chưa push.
