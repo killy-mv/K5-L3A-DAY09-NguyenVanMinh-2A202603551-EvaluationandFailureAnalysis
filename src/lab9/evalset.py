@@ -51,7 +51,12 @@ def load_jsonl(path: Path) -> list[dict[str, Any]]:
 
 
 def sha12(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()[:12]
+    """Hash canonical LF bytes so Git's Windows/Linux checkout does not change eval identity.
+
+    Content and item order still matter. Only CRLF vs LF is normalized; labels
+    are still separate, and any actual data edit changes the fingerprint.
+    """
+    return hashlib.sha256(path.read_bytes().replace(bytes((13, 10)), bytes((10,)))).hexdigest()[:12]
 
 
 def build(source: Path = SOURCE) -> tuple[int, int]:

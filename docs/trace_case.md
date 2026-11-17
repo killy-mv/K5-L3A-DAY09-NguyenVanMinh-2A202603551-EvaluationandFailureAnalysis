@@ -2,7 +2,7 @@
 
 | Trường | Bằng chứng đã chạy |
 |---|---|
-| Trial | `seeded_regression C-002@11`, run `R-seeded_regression-C-002-s11`, có trong `E-seeded_regression-20261117-9bd5` |
+| Trial | `seeded_regression C-002@11`, run `R-seeded_regression-C-002-s11`, có trong `E-seeded_regression-20261117-bd5f` |
 | Triệu chứng | Grader Lab8 FAIL: `status resolved != denied`; ledger ghi 20.000đ (một dòng), nhãn đúng `denied` / 0đ |
 | Bước sai đầu tiên | **Event #3 `model_override`**, payload `delay_days: 5`; thay delay do DB xác nhận là **2 ngày** |
 | Vì sao đây là bước sai đầu tiên | Event #1 handoff không thay đổi đơn; event #2 investigator truy vấn DB đúng, sau đó #3 mới ghi đè bằng lời người dùng |

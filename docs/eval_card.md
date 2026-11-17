@@ -1,8 +1,8 @@
 # Eval card — LogiX-VN refund agent
 
-**Run ID baseline:** E-swarm-20261117-9bd5 · SHA eval set: 9bd5c46ff0a1.
-**Run ID fixed:** E-fixed-20261117-9bd5.
-**Run ID regression:** E-seeded_regression-20261117-9bd5.
+**Run ID baseline:** E-swarm-20261117-bd5f · SHA eval set: bd5fbe426b51.
+**Run ID fixed:** E-fixed-20261117-bd5f.
+**Run ID regression:** E-seeded_regression-20261117-bd5f.
 **Phiên bản:** Lab 9 cá nhân, eval set v1, metric spec v1.1; 14 public item × 5 seed (11,22,33,44,55), MockLLM, Python 3.13.17.
 **Nhãn:** data/eval/labels_v1.json tách khỏi eval_set_v1.jsonl; source lab8_public.
 
@@ -56,8 +56,8 @@ CI 95% percentile, paired by **item** (mean over five seeds per item), n_resampl
 ## M5 — Evaluation v2: adversarial pack và slice gate
 
 - Eval set v2: **28 item = 14 public + 14 adversarial**, 5 seeds
-  (11,22,33,44,55). SHA: `c7ef29ae09f6`; baseline run
-  `E-swarm-20261117-c7ef` (MockLLM, script-generated).
+  (11,22,33,44,55). SHA: `fa73119313fa`; baseline run
+  `E-swarm-20261117-fa73` (MockLLM, script-generated).
 - 8 cơ chế adversarial ánh xạ vào FM-02...FM-09, mỗi FM bị tấn công có
   ≥3 item **trên toàn bộ v2**. Source và provenance giữ tại từng item;
   nhãn vẫn nằm riêng `data/eval/labels_v2.json`.
@@ -71,10 +71,10 @@ CI 95% percentile, paired by **item** (mean over five seeds per item), n_resampl
 
 | Shape | Run ID | Overall pass_rate | money_movement pass_rate | Gate |
 |---|---|---:|---:|---|
-| swarm baseline | `E-swarm-20261117-c7ef` | 0.9786 | 1.000 | Baseline |
-| fixed | `E-fixed-20261117-c7ef` | 1.0 | 1.000 | exit 0 |
-| honest_refactor | `E-honest_refactor-20261117-c7ef` | 1.0 | 1.000 | exit 0 |
-| slice_regression | `E-slice_regression-20261117-c7ef` | 0.9357 | **0.850** | exit 1 — slice:money_movement/pass_rate |
+| swarm baseline | `E-swarm-20261117-fa73` | 0.9786 | 1.000 | Baseline |
+| fixed | `E-fixed-20261117-fa73` | 1.0 | 1.000 | exit 0 |
+| honest_refactor | `E-honest_refactor-20261117-fa73` | 1.0 | 1.000 | exit 0 |
+| slice_regression | `E-slice_regression-20261117-fa73` | 0.9357 | **0.850** | exit 1 — slice:money_movement/pass_rate |
 
 Đối với `slice_regression`: overall Δ=-0.043 và CI [-0.121,+0.029]
 chạm 0, **không đủ để kết luận giảm có ý nghĩa thống kê trên toàn bộ
@@ -104,7 +104,7 @@ Set A = [11, 22, 33, 44, 55], set B = [66, 77, 88, 99, 110]. Cùng shape `swarm`
 | pass@5 | 1.0000 | 1.0000 | 0.0000 |
 | pass^5 | 0.8929 | 0.8929 | 0.0000 |
 
-**Ngưỡng M6:** chọn `pass_hat_5 >= 0.80`, blocking trên v2 (baseline `E-swarm-20261117-c7ef`, SHA `c7ef29ae09f6`). Baseline 0.8929 > 0.80, tạo biên 0.0929; sự chênh lệch A/A quan sát = 0, nên ngưỡng không nằm *trong* vùng nhiễu quan sát. Ngưỡng là lựa chọn quản trị rủi ro cho demo, không phải giới hạn thống kê đã xác thực trên nhiều lần A/A độc lập.
+**Ngưỡng M6:** chọn `pass_hat_5 >= 0.80`, blocking trên v2 (baseline `E-swarm-20261117-fa73`, SHA `fa73119313fa`). Baseline 0.8929 > 0.80, tạo biên 0.0929; sự chênh lệch A/A quan sát = 0, nên ngưỡng không nằm *trong* vùng nhiễu quan sát. Ngưỡng là lựa chọn quản trị rủi ro cho demo, không phải giới hạn thống kê đã xác thực trên nhiều lần A/A độc lập.
 
 ### Chạy các biến thể v2 sau cập nhật M6
 
